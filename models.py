@@ -30,6 +30,7 @@ class RSSM(tools.Module):
     if state is None:
       state = self.initial(tf.shape(action)[0])
     embed = tf.transpose(embed, [1, 0, 2])
+    # action = tf.expand_dims(action, 2)
     action = tf.transpose(action, [1, 0, 2])
     post, prior = tools.static_scan(
         lambda prev, inputs: self.obs_step(prev[0], *inputs),

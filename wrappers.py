@@ -146,6 +146,35 @@ class Atari:
     image = image[:, :, None] if self._grayscale else image
     return {'image': image}
 
+class Football:
+  def __init__(self, env):
+    self.env = env
+    self._random = np.random.RandomState(seed=None)
+
+  @property
+  def observation_space(self):
+    shape = (64, 64, 3)
+    space = gym.spaces.Box(low=0, high=255, shape=shape, dtype=np.float32)
+    return gym.spaces.Dict({'image': space})
+
+  @property
+  def action_space(self):
+    return self.env.action_space
+
+  def close(self):
+    return self.env.close()
+
+  def reset(self):
+    observation = self.env.reset()
+    return {'image': observation}
+
+  def step(self, action):
+    observation, reward, done, info = self.env.step(action)
+    dict_obs = {'image': observation}
+    return dict_obs, reward, done, info
+
+  def render(self, mode):
+    return self._env.render(mode)
 
 class Collect:
 

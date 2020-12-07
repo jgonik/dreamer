@@ -6,6 +6,7 @@ import os
 import pathlib
 import sys
 import time
+import gfootball.env as football_env
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['MUJOCO_GL'] = 'egl'
@@ -76,7 +77,7 @@ def define_config():
   config.horizon = 15
   config.action_dist = 'tanh_normal'
   config.action_init_std = 5.0
-  config.expl = 'additive_gaussian'
+  config.expl = 'epsilon_greedy'
   config.expl_amount = 0.3
   config.expl_decay = 0.0
   config.expl_min = 0.0
@@ -244,6 +245,8 @@ class Dreamer(tools.Module):
     self.train(next(self._dataset))
 
   def _exploration(self, action, training):
+    print('in exploration?????')
+    print('exploration:', self._c.expl)
     if training:
       amount = self._c.expl_amount
       if self._c.expl_decay:
@@ -384,6 +387,10 @@ def make_env(config, writer, prefix, datadir, store):
         task, config.action_repeat, (64, 64), grayscale=False,
         life_done=True, sticky_actions=True)
     env = wrappers.OneHotAction(env)
+  elif suite == 'football':
+    env = football_env.create_environment(representation='pixels', env_name='academy_empty_goal_close', stacked=False, logdir='./football/empty_goal_close2', write_goal_dumps=True, write_full_episode_dumps=True, render=True, write_video=True)
+    env = wrappers.Football(env)
+    env = wrappers.OneHotAction(env)
   else:
     raise NotImplementedError(suite)
   env = wrappers.TimeLimit(env, config.time_limit / config.action_repeat)
@@ -416,9 +423,10 @@ def main(config):
   train_envs = [wrappers.Async(lambda: make_env(
       config, writer, 'train', datadir, store=True), config.parallel)
       for _ in range(config.envs)]
-  test_envs = [wrappers.Async(lambda: make_env(
-      config, writer, 'test', datadir, store=False), config.parallel)
-      for _ in range(config.envs)]
+  # test_envs = [wrappers.Async(lambda: make_env(
+  #     config, writer, 'test', datadir, store=False), config.parallel)
+  #     for _ in range(config.envs)]
+  test_envs = train_envs
   actspace = train_envs[0].action_space
 
   # Prefill dataset with random episodes.
